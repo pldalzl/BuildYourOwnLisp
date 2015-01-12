@@ -24,18 +24,19 @@ void add_history(char* unused) {}
 #include <editline/history.h>
 #endif
 
-/* Create Enumeration of Possible lval Types */
-enum { LVAL_NUM, LVAL_ERR };
-
 /* Create Enumeration of Possible Error Types */
 enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
 
+/* Create Enumeration of Possible lval Types */
+enum { LVAL_NUM, LVAL_ERR };
+
+
 /* Declare new lval Struct */
-typedef union {
+typedef struct {
   int type;
   long num;
   int err;
-}lval;
+} lval;
 
 /* Create a new number type lval */
 lval lval_num(long x){
@@ -79,21 +80,22 @@ void lval_print(lval v){
 void lval_println(lval v){ lval_print(v); putchar('\n');}
 
 /* Use operator string to see which operation to perform */
-lval eval_op(long x, char* op, long y) {
+lval eval_op(lval x, char* op, lval y) {
   /* if either value is an error return it */
   if (x.type == LVAL_ERR) { return x; }
   if (y.type == LVAL_ERR) { return y; }
 
   /* Otherwise do the maths on the number values */
   if (strcmp(op, "+") == 0) { return lval_num(x.num + y.num); }
-    if (strcmp(op, "-") == 0) { return lval_num(x.num - y.num); }
-    if (strcmp(op, "*") == 0) { return lval_num(x.num * y.num); }
-    if (strcmp(op, "/") == 0) { 
+  if (strcmp(op, "-") == 0) { return lval_num(x.num - y.num); }
+  if (strcmp(op, "*") == 0) { return lval_num(x.num * y.num); }
+  if (strcmp(op, "/") == 0) { 
       /* if second operand is zero return error */
-      return y.num ==  
-      ? lval_num(LERR_DIV_ZERO)
-      : lval_num(x.num / y.num); 
-    }
+    return y.num == 0
+    ? lval_num(LERR_DIV_ZERO)
+    : lval_num(x.num / y.num); 
+
+  }
 
     return lval_err(LERR_BAD_OP);
 }
@@ -112,7 +114,7 @@ lval eval(mpc_ast_t* t) {
   char* op = t->children[1]->contents;
   
   /* We store the third child in `x` */
-  long x = eval(t->children[2]);
+  lval x = eval(t->children[2]);
   
   /* Iterate the remaining children and combining. */
   int i = 3;
